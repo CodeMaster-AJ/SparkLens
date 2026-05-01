@@ -7,7 +7,11 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret-change-in-production')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Fix for Render deployment - accept all hosts
+import os
+ALLOWED_HOSTS = ['*']
+# Uncomment below for production with specific hosts:
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'sparklens.onrender.com,localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',

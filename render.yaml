@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sparklens
+    env: python
+    plan: free
+    buildCommand: cd idea_validator && pip install -r requirements.txt
+    startCommand: cd idea_validator && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "sparklens.onrender.com,localhost,127.0.0.1"
