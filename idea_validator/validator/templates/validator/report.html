@@ -1,0 +1,446 @@
+{% extends 'validator/base.html' %}
+
+{% block title %}Report: {{ report.submission.title|default:"Untitled Idea" }} &middot; SparkLens{% endblock %}
+
+{% block extra_head %}
+<style>
+  .report-section {
+    opacity: 0;
+    animation: fadeInUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .report-section:nth-child(1) { animation-delay: 0ms; }
+  .report-section:nth-child(2) { animation-delay: 80ms; }
+  .report-section:nth-child(3) { animation-delay: 160ms; }
+  .report-section:nth-child(4) { animation-delay: 240ms; }
+  .report-section:nth-child(5) { animation-delay: 320ms; }
+  .report-section:nth-child(6) { animation-delay: 400ms; }
+
+  .header-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-accent);
+  }
+
+  .score-ring-container {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .score-ring {
+    position: relative;
+    width: 96px;
+    height: 96px;
+  }
+  .score-ring svg {
+    transform: rotate(-90deg);
+    width: 96px;
+    height: 96px;
+  }
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--surface-2);
+    stroke-width: 8;
+  }
+  .score-ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 276.46;
+    stroke-dashoffset: 276.46;
+    transition: stroke-dashoffset 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .score-ring-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 26px;
+    letter-spacing: -0.03em;
+  }
+  .score-ring-label {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .score-ring-sublabel {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  .swot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .swot-card {
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .swot-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow-lg); }
+  .swot-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+  .swot-strengths::before { background: var(--green); }
+  .swot-weaknesses::before { background: var(--red); }
+  .swot-opportunities::before { background: var(--accent); }
+  .swot-threats::before { background: var(--amber); }
+  .swot-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .swot-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .swot-strengths .swot-icon { background: var(--green-bg); }
+  .swot-weaknesses .swot-icon { background: var(--red-bg); }
+  .swot-opportunities .swot-icon { background: var(--accent-bg); }
+  .swot-threats .swot-icon { background: var(--amber-bg); }
+  .swot-title { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+  .swot-card ul { list-style: none; padding: 0; }
+  .swot-card li {
+    padding: 12px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .swot-card li:last-child { border-bottom: none; }
+  .swot-card li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 8px;
+    flex-shrink: 0;
+  }
+  .swot-strengths li::before { background: var(--green); }
+  .swot-weaknesses li::before { background: var(--red); }
+  .swot-opportunities li::before { background: var(--accent); }
+  .swot-threats li::before { background: var(--amber); }
+
+  .risk-item {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1.5px solid var(--border);
+    transition: all 0.25s;
+  }
+  .risk-item:hover { border-color: var(--red-border); box-shadow: 0 4px 16px var(--red-bg); transform: translateX(4px); }
+  .risk-item:last-child { margin-bottom: 0; }
+  .risk-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .risk-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--red-glow);
+  }
+  .risk-label { font-weight: 700; color: var(--text-primary); font-size: 14px; }
+  .mitigation-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .mitigation-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+  .step-item {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .step-item:hover { padding-left: 8px; }
+  .step-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-number {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--accent);
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-bg);
+    border: 1.5px solid var(--accent-border);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+  .step-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; padding-top: 6px; font-weight: 500; }
+
+  .section-heading {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--border);
+  }
+
+  .summary-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    background: var(--white);
+    border-left: 4px solid var(--accent);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: var(--accent-bg);
+    border-radius: 50%;
+    transform: translate(40px, -40px);
+    opacity: 0.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 920px;">
+
+  <div class="anim-fade-down" style="margin-bottom: 12px;">
+    <a href="{% url 'home' %}" class="btn-ghost" style="display: inline-flex;">&larr; New Analysis</a>
+  </div>
+
+  <!-- Report Header -->
+  <div class="report-section header-card" style="margin-bottom: 28px;">
+    <div class="header-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+      <div>
+        <div class="anim-bounce" style="animation-delay: 0.1s; display: inline-block;">
+          <span class="verdict-badge verdict-{{ report.verdict|cut:'-' }}">
+            {% if report.verdict == 'GO' %}&#10003; Go{% elif report.verdict == 'CAUTION' %}&#9888; Caution{% else %}&#10007; No-Go{% endif %}
+          </span>
+        </div>
+        <h1 class="anim-slide-left" style="font-size: clamp(26px, 4vw, 34px); font-weight: 800; letter-spacing: -0.04em; margin-top: 14px;">
+          {{ report.submission.title|default:"Untitled Idea" }}
+        </h1>
+        <div class="anim-fade-in" style="display: flex; align-items: center; gap: 12px; margin-top: 10px; animation: fadeIn 0.5s 0.3s forwards; opacity: 0;">
+          <span style="font-size: 13px; color: var(--text-tertiary); font-weight: 500;">
+            {{ report.created_at|date:"M j, Y" }}
+          </span>
+          <span style="width: 4px; height: 4px; background: var(--border-dark); border-radius: 50%;"></span>
+          <span class="badge">{{ report.model_used }}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-shrink: 0;" class="anim-fade-up" style="animation-delay: 0.25s;">
+        <a href="{% url 'report_pdf' report.id %}" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="report-section" style="margin-bottom: 32px;">
+    <div class="section-heading">Executive Summary</div>
+    <div class="summary-card">
+      <p style="font-size: 15px; line-height: 1.8; color: var(--text-secondary); position: relative; z-index: 1;">{{ report.summary }}</p>
+    </div>
+  </div>
+
+  <!-- Scores -->
+  <div class="report-section" style="margin-bottom: 32px;">
+    <div class="section-heading">Analysis Scores</div>
+    <div class="card" style="padding: 36px; border: 1.5px solid var(--border);">
+      <div class="scores-row" style="display: flex; gap: 48px; flex-wrap: wrap;">
+        <div class="score-ring-container">
+          <div class="score-ring anim-scale" data-score="{{ report.market_score }}">
+            <svg viewBox="0 0 96 96">
+              <circle class="score-ring-bg" cx="48" cy="48" r="40"/>
+              <circle class="score-ring-fill" cx="48" cy="48" r="40" stroke="var(--green)"/>
+            </svg>
+            <div class="score-ring-value" style="color: var(--green);">{{ report.market_score }}</div>
+          </div>
+          <div>
+            <div class="score-ring-label">Market Potential</div>
+            <div class="score-ring-sublabel">out of 10</div>
+          </div>
+        </div>
+        <div class="score-ring-container">
+          <div class="score-ring anim-scale" data-score="{{ report.feasibility_score }}">
+            <svg viewBox="0 0 96 96">
+              <circle class="score-ring-bg" cx="48" cy="48" r="40"/>
+              <circle class="score-ring-fill" cx="48" cy="48" r="40" stroke="var(--accent)"/>
+            </svg>
+            <div class="score-ring-value" style="color: var(--accent);">{{ report.feasibility_score }}</div>
+          </div>
+          <div>
+            <div class="score-ring-label">Feasibility</div>
+            <div class="score-ring-sublabel">out of 10</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SWOT Grid -->
+  <div class="report-section" style="margin-bottom: 32px;">
+    <div class="section-heading">SWOT Analysis</div>
+    <div class="swot-grid">
+      <div class="swot-card swot-strengths anim-fade-up" style="animation-delay: 0.2s;">
+        <div class="swot-header">
+          <div class="swot-icon">&#128170;</div>
+          <div class="swot-title">Strengths</div>
+        </div>
+        <ul>
+          {% for s in report.strengths %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="swot-card swot-weaknesses anim-fade-up" style="animation-delay: 0.3s;">
+        <div class="swot-header">
+          <div class="swot-icon">&#9888;&#65039;</div>
+          <div class="swot-title">Weaknesses</div>
+        </div>
+        <ul>
+          {% for s in report.weaknesses %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="swot-card swot-opportunities anim-fade-up" style="animation-delay: 0.4s;">
+        <div class="swot-header">
+          <div class="swot-icon">&#128640;</div>
+          <div class="swot-title">Opportunities</div>
+        </div>
+        <ul>
+          {% for s in report.opportunities %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="swot-card swot-threats anim-fade-up" style="animation-delay: 0.5s;">
+        <div class="swot-header">
+          <div class="swot-icon">&#128737;&#65039;</div>
+          <div class="swot-title">Threats</div>
+        </div>
+        <ul>
+          {% for s in report.threats %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Analysis -->
+  <div class="report-section" style="margin-bottom: 32px;">
+    <div class="section-heading">Risk Analysis</div>
+    <div class="card" style="padding: 24px; border: 1.5px solid var(--border);">
+      {% for risk in report.risks %}
+      <div class="risk-item anim-slide-left" style="animation-delay: {{ forloop.counter|add:0|add:0 }}00ms;">
+        <div class="risk-header">
+          <div class="risk-dot"></div>
+          <div class="risk-label">{{ risk.risk }}</div>
+        </div>
+        <div class="mitigation-label">Mitigation Strategy</div>
+        <div class="mitigation-text">{{ risk.mitigation }}</div>
+      </div>
+      {% empty %}
+      <p style="color: var(--text-tertiary); font-size: 14px; font-weight: 500;">No significant risks identified.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Next Steps -->
+  <div class="report-section" style="margin-bottom: 48px;">
+    <div class="section-heading">Recommended Next Steps</div>
+    <div class="card" style="padding: 24px 32px; border: 1.5px solid var(--border);">
+      {% for step in report.next_steps %}
+      <div class="step-item anim-fade-up" style="animation-delay: {{ forloop.counter }}00ms;">
+        <div class="step-number">{{ forloop.counter }}</div>
+        <div class="step-text">{{ step }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="report-section" style="text-align: center; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; padding-top: 16px;">
+    <a href="{% url 'home' %}" class="btn-primary">
+      Validate Another Idea
+      <span>&rarr;</span>
+    </a>
+    <a href="{% url 'history' %}" class="btn-secondary">
+      View History
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.score-ring-fill').forEach(ring => {
+      const score = parseInt(ring.closest('.score-ring').querySelector('.score-ring-value').textContent);
+      const circumference = 2 * Math.PI * 40;
+      ring.style.strokeDasharray = circumference;
+      ring.style.strokeDashoffset = circumference;
+      setTimeout(() => {
+        const offset = circumference - (score / 10) * circumference;
+        ring.style.strokeDashoffset = offset;
+      }, 300);
+    });
+  });
+</script>
+{% endblock %}

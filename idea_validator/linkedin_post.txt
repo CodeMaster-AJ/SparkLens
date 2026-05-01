@@ -1,0 +1,37 @@
+🚀 Just built SparkLens — an AI-powered Startup Idea Validator!
+
+Ever had a startup idea but didn't know if it's worth pursuing? I built SparkLens to solve exactly that.
+
+✨ What it does:
+→ Paste your startup idea
+→ AI analyzes it instantly
+→ Get a professional report with SWOT analysis, market scoring, risk assessment, and 5 actionable next steps
+→ Download as PDF
+→ All saved to history automatically — no login needed
+
+🛠 Tech Stack:
+• Django 4.2 (Backend)
+• OpenRouter AI / GPT (Intelligence)
+• WeasyPrint (PDF Export)
+• WhiteNoise + Gunicorn (Production)
+• Rich white UI with bold animations
+• SQLite (Zero-config database)
+
+🎯 Key Features:
+✅ Session-based history (14-day persistence, no signup)
+✅ Animated SVG score rings
+✅ Staggered entrance animations
+✅ Professional PDF export with watermark
+✅ Production-ready deployment config
+✅ Clean architecture — AI logic fully separated from views
+
+💡 Why I built it:
+Too many founders waste months building ideas nobody wants. SparkLens gives honest, structured validation in seconds — for free.
+
+🔗 GitHub: https://github.com/CodeMaster-AJ/SparkLens
+
+This was an end-to-end build — from AI prompt engineering to production deployment config. Every line written by me.
+
+Would love your feedback! Drop a 💡 if you'd use this.
+
+#Django #Python #AI #Startup #WebDevelopment #OpenSource #MachineLearning #FullStack #BuildInPublic #SoftwareEngineering
