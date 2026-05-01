@@ -1,0 +1,10 @@
+/* PDF Print Styles - supplemental to pdf_report.html inline styles */
+@page {
+  margin: 0;
+  size: A4;
+}
+
+body {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}

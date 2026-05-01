@@ -1,0 +1,140 @@
+{% extends 'validator/base.html' %}
+
+{% block title %}History &middot; SparkLens{% endblock %}
+
+{% block extra_head %}
+<style>
+  .history-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 26px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+  .history-card:hover {
+    border-color: var(--accent-border);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  .history-card a { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px; width: 100%; }
+
+  .history-indicator {
+    width: 5px;
+    height: 52px;
+    border-radius: 99px;
+    flex-shrink: 0;
+    transition: height 0.2s;
+  }
+  .history-card:hover .history-indicator { height: 60px; }
+  .indicator-GO { background: var(--green); box-shadow: 0 0 12px var(--green-glow); }
+  .indicator-CAUTION { background: var(--amber); box-shadow: 0 0 12px var(--amber-glow); }
+  .indicator-NOGO { background: var(--red); box-shadow: 0 0 12px var(--red-glow); }
+  .indicator-none { background: var(--text-tertiary); }
+
+  .history-info { flex: 1; min-width: 0; }
+  .history-title {
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .history-meta {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+  }
+  .history-arrow {
+    color: var(--text-tertiary);
+    font-size: 20px;
+    transition: all 0.25s;
+    flex-shrink: 0;
+  }
+  .history-card:hover .history-arrow {
+    color: var(--accent);
+    transform: translateX(5px);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+  .empty-icon {
+    width: 72px;
+    height: 72px;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 24px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 740px; padding-top: 40px; padding-bottom: 80px;">
+
+  <div class="anim-fade-down" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+    <div>
+      <h1 style="font-size: 30px; font-weight: 800; letter-spacing: -0.04em;">Your Analyses</h1>
+      <p style="color: var(--text-tertiary); font-size: 14px; margin-top: 4px; font-weight: 500;">{{ submissions|length }} idea{{ submissions|length|pluralize }} evaluated</p>
+    </div>
+    {% if submissions %}
+    <form method="post" action="{% url 'history' %}" onsubmit="return confirm('Clear all history? This cannot be undone.');">
+      {% csrf_token %}
+      <button type="submit" class="btn-danger">Clear All</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if not submissions %}
+  <div class="empty-state">
+    <div class="empty-icon">&#128196;</div>
+    <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em;">No analyses yet</h2>
+    <p style="color: var(--text-tertiary); font-size: 14px; margin-bottom: 28px; font-weight: 500;">Submit your first startup idea to see it here.</p>
+    <a href="{% url 'home' %}" class="btn-primary">Validate an Idea</a>
+  </div>
+  {% else %}
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    {% for submission in submissions %}
+    <div class="history-card" style="animation-delay: {{ forloop.counter }}00ms;">
+      <a href="{% if submission.report %}{% url 'report_detail' submission.report.id %}{% else %}#{% endif %}">
+        <div class="history-indicator {% if submission.report %}indicator-{{ submission.report.verdict|cut:'-' }}{% else %}indicator-none{% endif %}"></div>
+        <div class="history-info">
+          <div class="history-title">{{ submission.title|default:"Untitled Idea" }}</div>
+          <div class="history-meta">
+            <span>{{ submission.created_at|date:"M j, Y" }}</span>
+            {% if submission.report %}
+            <span class="verdict-badge verdict-{{ submission.report.verdict|cut:'-' }}" style="font-size: 11px; padding: 4px 10px;">
+              {% if submission.report.verdict == 'GO' %}Go{% elif submission.report.verdict == 'CAUTION' %}Caution{% else %}No-Go{% endif %}
+            </span>
+            {% else %}
+            <span class="badge">Pending</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="history-arrow">&rarr;</div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
